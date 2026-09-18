@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+  products      Product[]
+  sales         Sale[]
+  purchases     Purchase[]
+  expenses      Expense[]
+  customers     Customer[]
+  suppliers     Supplier[]
+  categories    Category[]
+  cashMovements CashMovement[]
+  returns       Return[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @map("expires_at")
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String?   @map("category_id")
+  category    Category? @relation(fields: [categoryId], references: [id])
+  name        String
+  price       Float
+  cost        Float?
+  stock       Int       @default(0)
+  minStock    Int?      @default(10) @map("min_stock")
+  unit        String?   @default("un")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  saleItems      SaleItem[]
+  purchaseItems  PurchaseItem[]
+  returnItems    ReturnItem[]
+
+  @@map("products")
+}
+
+model Sale {
+  id          String      @id @default(uuid())
+  userId      String      @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  total       Float
+  customerName String?    @map("customer_name")
+  paymentMethod String    @map("payment_method")
+  status      String      @default("COMPLETED")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  items SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String  @map("sale_id")
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product?   @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  subtotal  Float
+
+  @@map("sale_items")
+}
+
+model Purchase {
+  id          String      @id @default(uuid())
+  userId      String      @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  total       Float
+  supplier    String
+  status      String      @default("PENDING")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  items PurchaseItem[]
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         String  @id @default(uuid())
+  purchaseId String  @map("purchase_id")
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String  @map("product_id")
+  product    Product?   @relation(fields: [productId], references: [id])
+  quantity   Int
+  cost       Float
+  subtotal   Float
+
+  @@map("purchase_items")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  amount      Float
+  category    String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("expenses")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("customers")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("suppliers")
+}
+
+model CashMovement {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  type        String
+  amount      Float
+  method      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("cash_movements")
+}
+
+model Return {
+  id          String      @id @default(uuid())
+  userId      String      @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  total       Float
+  supplier    String
+  status      String      @default("PENDING")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  items ReturnItem[]
+
+  @@map("returns")
+}
+
+model ReturnItem {
+  id        String  @id @default(uuid())
+  returnId  String  @map("return_id")
+  return    Return  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product?   @relation(fields: [productId], references: [id])
+  quantity  Int
+  listPrice Float   @map("list_price")
+  subtotal  Float
+
+  @@map("return_items")
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+uploads/
+public/uploads/
+pgdata/
+*.db
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
